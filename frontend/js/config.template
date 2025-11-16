@@ -1,0 +1,4 @@
+export const CLIENT_ID = YOUR_CLIENT_ID;
+export const DOMAIN = YOUR_DOMAIN
+export const API_AUDIENCE = "https://api.example.com";
+export const REDIRECT_URI = "http://localhost:PORT/callback";
