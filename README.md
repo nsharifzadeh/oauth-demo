@@ -184,3 +184,27 @@ This prevents attackers from intercepting the authorization code and using it (t
 - [ ] Deploy frontend to Vercel/Netlify and backend to Heroku/Railway
 - [ ] Add role-based access control (RBAC) using Auth0 roles
 - [ ] Store tokens in secure HTTP-only cookies instead of localStorage (more secure)
+
+
+
+### Explanation of the Diagram Steps
+- Frontend (3000)
+- Generates code_verifier
+- Hashes it → code_challenge
+- Sends user to Auth0 /authorize
+- User logs in at Auth0
+- Auth0 redirects back with ?code=XYZ
+- Frontend retrieves code + code_verifier
+- Exchanges code for tokens at /oauth/token
+- Calls API with Authorization: Bearer <access_token>
+
+Auth0
+
+- Verifies login credentials
+- Verifies PKCE proof (challenge vs verifier)
+- Issues tokens (ID & Access)
+- Backend API (3001)
+- Middleware validates JWT signature using JWKS
+- Confirms issuer, audience, expiry, signature
+- Attaches decoded user → req.user
+- Returns protected response
