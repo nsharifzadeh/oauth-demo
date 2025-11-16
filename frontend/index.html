@@ -9,22 +9,24 @@
 
 <body>
   <h1>OAuth 2.0 Demo</h1>
-  <button id="login-button">Login with Auth0</button>
+  <button id="loginButton">Login with Auth0</button>
 
   <script type="module">
-    import { AUTH0_DOMAIN, CLIENT_ID, API_AUDIENCE } from './js/config.js';
-    import { pkceChallengeFromVerifier } from './js/pkce.js';
+    import { DOMAIN, CLIENT_ID, API_AUDIENCE, REDIRECT_URI } from './js/config.js';
+    import { generateRandomString, pkceChallengeFromVerifier } from './js/pkce.js';
+
     document.getElementById('loginButton').onclick = async () => {
-      const verifier = pkceChallengeFromVerifier();
-      localStorage.setItem('pkce_code_verifier', verifier);
+      // Generate a PKCE verifier and challenge
+      const verifier = generateRandomString(64);
+      localStorage.setItem('code_verifier', verifier);
 
       const challenge = await pkceChallengeFromVerifier(verifier);
 
-      const authUrl = `https://${AUTH0_DOMAIN}/authorize?` +
+      const authUrl = `https://${DOMAIN}/authorize?` +
         new URLSearchParams({
           response_type: 'code',
-          client_id: CLIENT_ID,       // <--- now defined
-          redirect_uri: window.location.origin + '/callback.html',
+          client_id: CLIENT_ID,
+          redirect_uri: REDIRECT_URI,
           scope: 'openid profile email',
           audience: API_AUDIENCE,
           code_challenge: challenge,

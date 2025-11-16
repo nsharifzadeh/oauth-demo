@@ -12,30 +12,38 @@
 
   <button id="call-api-button">Call API</button>
   <pre id="api-response"></pre>
+  <h2>User Info</h2>
+  <pre id="user-info"></pre>
 
   <script type="module">
+    import { CLIENT_ID, DOMAIN, REDIRECT_URI } from './js/config.js';
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    const clientId = "qqWAfTucJMMu4NBk809usWGDYhAOoc0E";
-    const domain = "dev-v5w1m8phoe03zoxk.us.auth0.com";
-    const redirectUri = "http://localhost:3000/callback";
 
+    // Read the verifier using the same key we store in index.html
     const code_verifier = localStorage.getItem("code_verifier");
 
     if (!code) {
-      alert("No authorization code found.");
+      // Show helpful debug info so the developer can see what's returned
+      document.getElementById('token-response').textContent = 'No authorization code found.\n' +
+        'Full URL: ' + window.location.href + '\n' +
+        'Query: ' + window.location.search + '\n' +
+        'Hash: ' + window.location.hash;
+      console.error('No code returned in URL', window.location.href);
     } else if (!code_verifier) {
-      alert("No code_verifier found. Go through login first.");
+      document.getElementById('token-response').textContent = 'No code_verifier found in localStorage. Start login first.';
+      console.error('Missing code_verifier in localStorage');
     } else {
       const body = new URLSearchParams({
         grant_type: "authorization_code",
-        client_id: clientId,
+        client_id: CLIENT_ID,
         code,
-        redirect_uri: redirectUri,
+        redirect_uri: REDIRECT_URI,
         code_verifier
       });
 
-      fetch(`https://${domain}/oauth/token`, {
+      fetch(`https://${DOMAIN}/oauth/token`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body
@@ -44,16 +52,32 @@
       .then(data => {
         document.getElementById("token-response").textContent = JSON.stringify(data, null, 2);
         window.access_token = data.access_token;
+      }).catch(err => {
+        document.getElementById('token-response').textContent = 'Token exchange failed: ' + err;
+        console.error(err);
       });
     }
 
     document.getElementById("call-api-button").onclick = async () => {
       if (!window.access_token) return alert("No access token!");
-      const response = await fetch("http://localhost:3001/hello", {
-        headers: { Authorization: `Bearer ${window.access_token}` }
-      });
-      const result = await response.json();
-      document.getElementById("api-response").textContent = JSON.stringify(result, null, 2);
+      try {
+        const response = await fetch("http://localhost:3001/hello", {
+          headers: { Authorization: `Bearer ${window.access_token}` }
+        });
+        const result = await response.json();
+        // Show full API response
+        document.getElementById("api-response").textContent = JSON.stringify(result, null, 2);
+        // If backend returned a `user` field (req.user), display it separately
+        if (result && result.user) {
+          document.getElementById("user-info").textContent = JSON.stringify(result.user, null, 2);
+        } else {
+          document.getElementById("user-info").textContent = 'No user object returned by API.';
+        }
+      } catch (err) {
+        document.getElementById('api-response').textContent = 'API call failed: ' + err;
+        document.getElementById('user-info').textContent = '';
+        console.error(err);
+      }
     };
   </script>
 </body>
