@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OAuth 2.0 Demo</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>OAuth 2.0 Demo</h1>
+  <button id="login-button">Login with Auth0</button>
+
+  <script type="module">
+    import { generateRandomString, pkceChallengeFromVerifier } from "./js/pkce.js";
+
+    const clientId = "qqWAfTucJMMu4NBk809usWGDYhAOoc0E";
+    const domain = "dev-v5w1m8phoe03zoxk.us.auth0.com";
+    const redirectUri = "http://localhost:3000/callback";
+    const audience = "https://api.example.com";
+    const scope = "openid profile email";
+
+    document.getElementById("login-button").onclick = async () => {
+      const code_verifier = generateRandomString(32);
+      localStorage.setItem("code_verifier", code_verifier);
+      const code_challenge = await pkceChallengeFromVerifier(code_verifier);
+
+      const authUrl = new URL(`https://${domain}/authorize`);
+      authUrl.searchParams.set("response_type", "code");
+      authUrl.searchParams.set("client_id", clientId);
+      authUrl.searchParams.set("redirect_uri", redirectUri);
+      authUrl.searchParams.set("scope", scope);
+      authUrl.searchParams.set("audience", audience);
+      authUrl.searchParams.set("code_challenge", code_challenge);
+      authUrl.searchParams.set("code_challenge_method", "S256");
+
+      window.location = authUrl.toString();
+    };
+  </script>
+</body>
+</html>

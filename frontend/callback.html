@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OAuth Callback</title>
+</head>
+<body>
+  <h1>Callback Page</h1>
+
+  <h2>Tokens</h2>
+  <pre id="token-response"></pre>
+
+  <button id="call-api-button">Call API</button>
+  <pre id="api-response"></pre>
+
+  <script type="module">
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const clientId = "qqWAfTucJMMu4NBk809usWGDYhAOoc0E";
+    const domain = "dev-v5w1m8phoe03zoxk.us.auth0.com";
+    const redirectUri = "http://localhost:3000/callback";
+
+    const code_verifier = localStorage.getItem("code_verifier");
+
+    if (!code) {
+      alert("No authorization code found.");
+    } else if (!code_verifier) {
+      alert("No code_verifier found. Go through login first.");
+    } else {
+      const body = new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: clientId,
+        code,
+        redirect_uri: redirectUri,
+        code_verifier
+      });
+
+      fetch(`https://${domain}/oauth/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("token-response").textContent = JSON.stringify(data, null, 2);
+        window.access_token = data.access_token;
+      });
+    }
+
+    document.getElementById("call-api-button").onclick = async () => {
+      if (!window.access_token) return alert("No access token!");
+      const response = await fetch("http://localhost:3001/hello", {
+        headers: { Authorization: `Bearer ${window.access_token}` }
+      });
+      const result = await response.json();
+      document.getElementById("api-response").textContent = JSON.stringify(result, null, 2);
+    };
+  </script>
+</body>
+</html>
